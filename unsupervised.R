@@ -37,3 +37,19 @@ yhat = predict(tree.lasvegas, newdata = lasvegas[-train,])
 lasvegas.test = lasvegas[-train, "Score"]
 mean((yhat - lasvegas.test)^2)
 
+
+# PCA
+data = data.frame(Nr..reviews, Nr..rooms, Nr..hotel.reviews, Helpful.votes, Score, Member.years)
+pr.out = prcomp(data, scale=TRUE)
+
+names(pr.out)
+
+pr.out$rotation=-pr.out$rotation
+pr.out$x=-pr.out$x
+biplot(pr.out, scale=0)
+
+pr.sqrt = pr.out$sdev^2
+pve = pr.sqrt / sum(pr.sqrt)
+
+plot(pve, xlab="Principal Component", ylab="Proportion of Variance Explained ", ylim=c(0,1),type="s")
+plot(cumsum(pve), xlab="Principal Component ", ylab=" Cumulative Proportion of Variance Explained ", ylim=c(0,1), type="s")
