@@ -7,7 +7,6 @@ summary(lasvegas)
 
 set.seed(1)
 data = data.frame(Score, Nr..rooms, Nr..hotel.reviews, Helpful.votes, Member.years)
-data = scale(data)
 
 wss = (nrow(data)-1)*sum(apply(data,2,var))
 for (i in 2:15) wss[i] <- sum(kmeans(data, centers=i)$withinss)
@@ -34,10 +33,10 @@ data.dist = dist(data, method = "euclidean") # distance matrix
 data.fit = hclust(data.dist, method="ward.D") 
 
 plot(data.fit) # display dendogram
-data.groups = cutree(data.fit, k=5) # cut tree into 5 clusters
+data.groups = cutree(data.fit, k=4) # cut tree into 4 clusters
 
-# draw dendogram with red borders around the 5 clusters 
-rect.hclust(data.fit, k=5, border="red")
+# draw dendogram with red borders around the 4 clusters 
+rect.hclust(data.fit, k=4, border="red")
 
 # PCA
 data = data.frame(Score, Nr..reviews, Nr..hotel.reviews, Helpful.votes, Member.years)
