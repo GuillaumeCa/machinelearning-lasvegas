@@ -1,4 +1,8 @@
+library(pROC)
+library(MASS)
+
 lasvegas = read.table("LasVegas.csv", sep=";", header = T)
+str(lasvegas)
 summary(lasvegas)
 attach(lasvegas)
 
@@ -7,7 +11,7 @@ attach(lasvegas)
 
 # classification
 
-# Logistic regression (glm)
+# Logistic regression (glm) -----
 set.seed(1)
 
 # transform data
@@ -17,7 +21,10 @@ lasvegas$Score = as.factor(Score.high)
 
 
 # train model on full lasvegas dataset
-log.fit = glm(Score ~ Helpful.votes + Hotel.stars + Free.internet + Traveler.type + Spa + Nr..rooms + Nr..reviews + Pool + Period.of.stay + Member.years, family=binomial, data=lasvegas)
+log.fit = glm(Score ~ User.country + Helpful.votes + Hotel.stars + Free.internet + Traveler.type + Spa + Gym + Nr..rooms + Nr..reviews + Pool + Period.of.stay + Member.years, family=binomial, data=lasvegas)
+
+#log.fit = glm(Score ~ Free.internet + Traveler.type + Spa + Pool + User.country, family=binomial, data=lasvegas)
+log.fit = glm(Score ~ Hotel.stars + Free.internet + Traveler.type, family=binomial, data=lasvegas)
 
 # show model info
 summary(log.fit)
@@ -32,7 +39,6 @@ contrasts(lasvegas$Score)
 log.pred = rep("HIGH", nrow(lasvegas))
 log.pred[log.prob > 0.5] = "LOW"
 
-library(pROC)
 
 # Confusion matrix between actual score and predicted
 table(Score, log.pred)
@@ -49,20 +55,22 @@ ROC.log = roc(lasvegas$Score, log.prob, levels = c("LOW", "HIGH"))
 plot.roc(ROC.log, print.auc = T, xlab = "1-Specificity", col = "red", axes = T)
 
 
-# With test set
+# With test set ---------
 
 # split the dataset in two
-train = (Member.years < 1)
+train = (Member.years < 5)
 
 # split Data
 lasvegas.train = lasvegas[train,]
 lasvegas.test = lasvegas[!train,]
 
 # train model with train data
-log.fit = glm(Score ~ Helpful.votes + Hotel.stars + Free.internet + Traveler.type + Spa + Nr..rooms + Nr..reviews + Pool + Period.of.stay + Member.years, family=binomial, data=lasvegas.train)
+log.fit = glm(Score ~ Hotel.stars + Free.internet + Traveler.type, family=binomial, data=lasvegas.train)
+#log.fit = glm(Score ~ Hotel.name + Helpful.votes, family=binomial, data=lasvegas.train)
 
 # get model info
 summary(log.fit)
+summary(log.fit)$coef[-1,4] < 0.05
 
 # predict score for the test set
 log.prob = predict(log.fit, newdata = lasvegas.test, type = "response")
@@ -89,10 +97,14 @@ ROC.log.test = roc(lasvegas.test$Score, log.prob, levels = c("LOW", "HIGH"))
 plot.roc(ROC.log.test, print.auc = T, xlab = "1-Specificity", col = "red", axes = T)
 
 
-# LDA
-library(MASS)
+# LDA ----------
 
-lda.fit = lda(Score ~ Helpful.votes + Hotel.stars + Free.internet + Traveler.type + Spa + Nr..rooms + Nr..reviews + Pool + Period.of.stay + Member.years + User.continent, data = lasvegas, subset = train)
+#lda.fit = lda(Score ~ Helpful.votes + Hotel.stars + Free.internet + Traveler.type + Spa + Nr..rooms + Nr..reviews + Pool + Period.of.stay + Member.years + User.continent, data = lasvegas, subset = train)
+lda.fit = lda(Score ~ Hotel.stars + Free.internet + Traveler.type, data = lasvegas, subset = train)
+
+summary(lda.fit)
+plot(lda.fit)
+
 lda.pred = predict(lda.fit, lasvegas.test)
 
 # Accuracy

@@ -3,43 +3,44 @@ attach(lasvegas)
 
 summary(lasvegas)
 
+# K-means clustering
+
+set.seed(1)
+data = data.frame(Score, Nr..rooms, Nr..hotel.reviews, Helpful.votes, Member.years)
+data = scale(data)
+
+wss = (nrow(data)-1)*sum(apply(data,2,var))
+for (i in 2:15) wss[i] <- sum(kmeans(data, centers=i)$withinss)
+plot(1:15, wss, type="b", xlab="Number of Clusters",
+     ylab="Within groups sum of squares")
+
+# with 4 clusters
+fit = kmeans(data, 4)
+
+# get cluster means
+aggregate(data,by=list(fit$cluster),FUN=mean)
+
+# append cluster assignment
+data = data.frame(data, fit$cluster)
+
+library(cluster) 
+clusplot(data, fit$cluster, color=TRUE, shade=TRUE, 
+         labels=2, lines=0)
+
 # Hierarchical clustering
 
-library(tree)
-set.seed(1)
+data.dist = dist(data, method = "euclidean") # distance matrix
 
-# Create training sample
-train = sample(1:nrow(lasvegas), nrow(lasvegas) / 2)
+data.fit = hclust(data.dist, method="ward.D") 
 
-# Create tree without User.country
-tree.lasvegas = tree(Score ~ ., lasvegas[,-1], subset = train)
+plot(data.fit) # display dendogram
+data.groups = cutree(data.fit, k=5) # cut tree into 5 clusters
 
-# plot tree
-plot(tree.lasvegas)
-text(tree.lasvegas)
-
-# Cross validation
-cv.lasvegas = cv.tree(tree.lasvegas, K=10)
-
-# plot
-plot(cv.lasvegas$size, cv.lasvegas$dev, type = 'b')
-
-# prune to 10 leaves
-prune.lasvegas = prune.tree(tree.lasvegas, best = 10)
-
-# display pruned tree
-plot(prune.lasvegas)
-text(prune.lasvegas)
-
-
-#
-yhat = predict(tree.lasvegas, newdata = lasvegas[-train,])
-lasvegas.test = lasvegas[-train, "Score"]
-mean((yhat - lasvegas.test)^2)
-
+# draw dendogram with red borders around the 5 clusters 
+rect.hclust(data.fit, k=5, border="red")
 
 # PCA
-data = data.frame(Nr..reviews, Nr..rooms, Nr..hotel.reviews, Helpful.votes, Score, Member.years)
+data = data.frame(Score, Nr..reviews, Nr..hotel.reviews, Helpful.votes, Member.years)
 pr.out = prcomp(data, scale=TRUE)
 
 names(pr.out)
